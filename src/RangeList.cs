@@ -1,5 +1,10 @@
 ﻿namespace OpenLab.Plus.Collections.Generic
 {
+    /// <summary>
+    /// RangeList Extension for Colletions
+    /// </summary>
+    /// <remarks>Open source software with MIT license</remarks>
+
     using System;
     using System.Collections;
     using System.Collections.Generic;
@@ -11,7 +16,6 @@
     /// To construct pure int instance of this class use EnumerablePlus.RangeList(int start, int count).
     /// </summary>
     /// <typeparam name="T">Integral type (sbyte,byte,short,ushort,int,uint,long,ulong)</typeparam>
-    /// <remarks>Open source software with MIT license</remarks>
 
     public class ReadOnlyRangeList<T> : IList<T> where T : IComparable
     {
