@@ -1,4 +1,4 @@
-﻿namespace OpenLab.Plus
+namespace OpenLab.Plus
 {
     /// <summary>
     /// Portable TickCount64 provider for all platforms
@@ -31,20 +31,27 @@
             {
                 var TheType = typeof(Environment);
                 var TheProp = TheType.GetProperty("TickCount64");
+
+                if (TheProp == null)
+                {
+                    return (Environment.TickCount & Int32.MaxValue); // Fallback // remove sign
+                }
+
                 var TheValObj = TheProp.GetValue(null); // static
                 long? TheVal = TheValObj as long?;
+
                 if ((TheVal.HasValue) && (TheVal.Value >= 0))
                 {
                     return TheVal.Value;
                 }
                 else
                 {
-                    return (Environment.TickCount & Int32.MaxValue); // remove sign
+                    return (Environment.TickCount & Int32.MaxValue); // Fallback // remove sign
                 }
             }
             catch
             {
-                return (Environment.TickCount & Int32.MaxValue); // remove sign
+                return (Environment.TickCount & Int32.MaxValue); // Fallback // remove sign
             }
         }
 
