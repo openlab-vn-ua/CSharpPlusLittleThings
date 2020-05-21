@@ -282,5 +282,7 @@
         public R GetOrMake<A1, R>(Func<A1, R> Maker, A1 arg1) { var C = new FuncCallProc<A1, R>(Maker, arg1); return GetOrMake(DeriveKey(C), C.Func); }
         public R GetOrMake<A1, A2, R>(Func<A1, A2, R> Maker, A1 arg1, A2 arg2) { var C = new FuncCallProc<A1, A2, R>(Maker, arg1, arg2); return GetOrMake(DeriveKey(C), C.Func); }
         public R GetOrMake<A1, A2, A3, R>(Func<A1, A2, A3, R> Maker, A1 arg1, A2 arg2, A3 arg3) { var C = new FuncCallProc<A1, A2, A3, R>(Maker, arg1, arg2, arg3); return GetOrMake(DeriveKey(C), C.Func); }
+        public R GetOrMake<A1, A2, A3, A4, R>(Func<A1, A2, A3, A4, R> Maker, A1 arg1, A2 arg2, A3 arg3, A4 arg4) { var C = new FuncCallProc<A1, A2, A3, A4, R>(Maker, arg1, arg2, arg3, arg4); return GetOrMake(DeriveKey(C), C.Func); }
+        public R GetOrMake<A1, A2, A3, A4, A5, R>(Func<A1, A2, A3, A4, A5, R> Maker, A1 arg1, A2 arg2, A3 arg3, A4 arg4, A5 arg5) { var C = new FuncCallProc<A1, A2, A3, A4, A5, R>(Maker, arg1, arg2, arg3, arg4, arg5); return GetOrMake(DeriveKey(C), C.Func); }
     }
 }
