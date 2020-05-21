@@ -64,5 +64,54 @@ namespace OpenLab.Plus.UnitTest
             Assert.AreEqual(6, MyCache.GetOrMake(Maker1, 5));
             Assert.AreEqual(2+2, Maker1CallCount);
         }
+
+        protected int Func2X(int a) { return a * 2; }
+        protected int Func3X(int a) { return a * 3; }
+
+        [TestMethod]
+        public void DistinguishDifferentMethods()
+        {
+            var MyCache = new MicroCache();
+
+            Assert.AreEqual(10, MyCache.GetOrMake(Func2X, 5));
+            Assert.AreEqual(15, MyCache.GetOrMake(Func3X, 5));
+        }
+
+        protected int Call2XWithClosure(MicroCache MyCache, int value, int offset)
+        {
+            return MyCache.GetOrMake((int a) => { return a * 2 + offset; }, value);
+        }
+
+        [TestMethod]
+        public void CacheClosuresIgnoringGeneratedThis()
+        {
+            var MyCache = new MicroCache();
+
+            // Maker's 'this' is not a part of key.by default (as it will be diffrent for each clousre isntance)
+
+            Assert.AreEqual(11, Call2XWithClosure(MyCache, 5, 1));
+            Assert.AreEqual(11, Call2XWithClosure(MyCache, 5, 2)); // will be 12 if Closure called (but it should not)
+        }
+
+        protected class Sample
+        {
+            int offset;
+            public Sample(int offset) { this.offset = offset; }
+            public int Func2X(int a) { return a * 2 + offset; }
+        }
+
+        [TestMethod]
+        public void IgnoreDifferentThisToSupportClosures()
+        {
+            var MyCache = new MicroCache();
+
+            var Obj1 = new Sample(1);
+            var Obj2 = new Sample(2);
+
+            // Maker's 'this' is not a part of key.by default (as it will be diffrent for each clousre isntance)
+
+            Assert.AreEqual(11, MyCache.GetOrMake(Obj1.Func2X, 5));
+            Assert.AreEqual(11, MyCache.GetOrMake(Obj2.Func2X, 5)); // will be 12 if Obj2 called (but it should not)
+        }
     }
 }

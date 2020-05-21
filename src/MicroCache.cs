@@ -269,9 +269,18 @@
     {
         // Access methods
 
-        public R GetOrMake<R>(Func<R> Maker) { var C = new FuncCallProc<R>(Maker); return GetOrMake(C.Args, C.Func); }
-        public R GetOrMake<A1, R>(Func<A1, R> Maker, A1 arg1) { var C = new FuncCallProc<A1, R>(Maker, arg1); return GetOrMake(C.Args, C.Func); }
-        public R GetOrMake<A1, A2, R>(Func<A1, A2, R> Maker, A1 arg1, A2 arg2) { var C = new FuncCallProc<A1, A2, R>(Maker, arg1, arg2); return GetOrMake(C.Args, C.Func); }
-        public R GetOrMake<A1, A2, A3, R>(Func<A1, A2, A3, R> Maker, A1 arg1, A2 arg2, A3 arg3) { var C = new FuncCallProc<A1, A2, A3, R>(Maker, arg1, arg2, arg3); return GetOrMake(C.Args, C.Func); }
+        // This single object used as key for void args use case, as Func<R>.Args may return null
+        // (we use same object, as all void args considered the same)
+        protected static Object ZERO_ARG_DEF_KEY = new Object();
+
+        protected object DeriveKey<R>(FuncCall<R> Call)
+        {
+            return Tuple.Create(Call.GetMakerInfo().Maker.Method, Call.Args ?? ZERO_ARG_DEF_KEY);
+        }
+
+        public R GetOrMake<R>(Func<R> Maker) { var C = new FuncCallProc<R>(Maker); return GetOrMake(DeriveKey(C), C.Func); }
+        public R GetOrMake<A1, R>(Func<A1, R> Maker, A1 arg1) { var C = new FuncCallProc<A1, R>(Maker, arg1); return GetOrMake(DeriveKey(C), C.Func); }
+        public R GetOrMake<A1, A2, R>(Func<A1, A2, R> Maker, A1 arg1, A2 arg2) { var C = new FuncCallProc<A1, A2, R>(Maker, arg1, arg2); return GetOrMake(DeriveKey(C), C.Func); }
+        public R GetOrMake<A1, A2, A3, R>(Func<A1, A2, A3, R> Maker, A1 arg1, A2 arg2, A3 arg3) { var C = new FuncCallProc<A1, A2, A3, R>(Maker, arg1, arg2, arg3); return GetOrMake(DeriveKey(C), C.Func); }
     }
 }
