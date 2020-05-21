@@ -51,19 +51,31 @@
         public abstract Func<R> Func { get; protected set; }
         public FuncCallResult<R> Call() => FuncCall.Call(Func);
         public virtual R Invoke() => this.Func.Invoke(); // Shortcut
+        public class MakerInfo
+        {
+            public readonly Delegate Maker;
+            public MakerInfo(Delegate Maker) { this.Maker = Maker; }
+        }
+
+        public abstract MakerInfo GetMakerInfo();
+        public abstract object[] GetArgsArray();
     }
 
     public class FuncCallProc<R> : FuncCall<R>
     {
-        public override Object Args { get { return Maker; } }
+        public override Object Args { get { return null; } } // Zero arg
         public override Func<R> Func { get; protected set; }
 
         protected readonly Func<R> Maker;
+
+        public override MakerInfo GetMakerInfo() { return new MakerInfo(Maker); }
+        public override object[] GetArgsArray() { return null; }
 
         public FuncCallProc(Func<R> Maker)
         {
             this.Func = Maker;
             this.Maker = Maker;
+            //GetMakerInfo().Maker.DynamicInvoke(GetArgsArray());
         }
     }
     public static partial class FuncCall
@@ -78,6 +90,9 @@
 
         protected readonly Tuple<A1> ArgsTuple;
         protected readonly Func<A1, R> Maker;
+
+        public override MakerInfo GetMakerInfo() { return new MakerInfo(Maker); }
+        public override object[] GetArgsArray() { return new object[] { ArgsTuple.Item1 }; }
 
         public FuncCallProc(Func<A1, R> Maker, A1 Arg1)
         {
@@ -99,6 +114,9 @@
         protected readonly Tuple<A1, A2> ArgsTuple;
         protected readonly Func<A1, A2, R> Maker;
 
+        public override MakerInfo GetMakerInfo() { return new MakerInfo(Maker); }
+        public override object[] GetArgsArray() { return new object[] { ArgsTuple.Item1, ArgsTuple.Item2 }; }
+
         public FuncCallProc(Func<A1, A2, R> Maker, A1 Arg1, A2 Arg2)
         {
             this.ArgsTuple = Tuple.Create(Arg1, Arg2);
@@ -118,6 +136,9 @@
 
         protected readonly Tuple<A1, A2, A3> ArgsTuple;
         protected readonly Func<A1, A2, A3, R> Maker;
+
+        public override MakerInfo GetMakerInfo() { return new MakerInfo(Maker); }
+        public override object[] GetArgsArray() { return new object[] { ArgsTuple.Item1, ArgsTuple.Item2, ArgsTuple.Item3 }; }
 
         public FuncCallProc(Func<A1, A2, A3, R> Maker, A1 Arg1, A2 Arg2, A3 Arg3)
         {

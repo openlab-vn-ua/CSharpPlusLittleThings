@@ -30,6 +30,13 @@ namespace OpenLab.Plus.UnitTest
             Assert.AreEqual(2, F1.Call().Result);
             Assert.AreEqual(4, F2.Call().Result);
             Assert.AreEqual(7, F3.Call().Result);
+
+            // Dynamic call
+
+            Assert.AreEqual(1, F0.GetMakerInfo().Maker.DynamicInvoke(F0.GetArgsArray()));
+            Assert.AreEqual(2, F1.GetMakerInfo().Maker.DynamicInvoke(F1.GetArgsArray()));
+            Assert.AreEqual(4, F2.GetMakerInfo().Maker.DynamicInvoke(F2.GetArgsArray()));
+            Assert.AreEqual(7, F3.GetMakerInfo().Maker.DynamicInvoke(F3.GetArgsArray()));
         }
 
         [TestMethod]
@@ -53,6 +60,13 @@ namespace OpenLab.Plus.UnitTest
             Assert.AreEqual("!1", F1.Call().Result);
             Assert.AreEqual("1!!1", F2.Call().Result);
             Assert.AreEqual("1!!###1", F3.Call().Result);
+
+            // Dynamic call
+
+            Assert.AreEqual("!", F0.GetMakerInfo().Maker.DynamicInvoke(F0.GetArgsArray()));
+            Assert.AreEqual("!1", F1.GetMakerInfo().Maker.DynamicInvoke(F1.GetArgsArray()));
+            Assert.AreEqual("1!!1", F2.GetMakerInfo().Maker.DynamicInvoke(F2.GetArgsArray()));
+            Assert.AreEqual("1!!###1", F3.GetMakerInfo().Maker.DynamicInvoke(F3.GetArgsArray()));
         }
     }
 }
