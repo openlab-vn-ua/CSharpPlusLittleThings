@@ -151,4 +151,50 @@
     {
         public static FuncCall<R> Create<A1, A2, A3, R>(Func<A1, A2, A3, R> Maker, A1 Arg1, A2 Arg2, A3 Arg3) { return new FuncCallProc<A1, A2, A3, R>(Maker, Arg1, Arg2, Arg3); }
     }
+
+    public class FuncCallProc<A1, A2, A3, A4, R> : FuncCall<R>
+    {
+        public override Object Args { get { return ArgsTuple; } }
+        public override Func<R> Func { get; protected set; }
+
+        protected readonly Tuple<A1, A2, A3, A4> ArgsTuple;
+        protected readonly Func<A1, A2, A3, A4, R> Maker;
+
+        public override MakerInfo GetMakerInfo() { return new MakerInfo(Maker); }
+        public override object[] GetArgsArray() { return new object[] { ArgsTuple.Item1, ArgsTuple.Item2, ArgsTuple.Item3, ArgsTuple.Item4 }; }
+
+        public FuncCallProc(Func<A1, A2, A3, A4, R> Maker, A1 Arg1, A2 Arg2, A3 Arg3, A4 Arg4)
+        {
+            this.ArgsTuple = Tuple.Create(Arg1, Arg2, Arg3, Arg4);
+            this.Func = () => Maker(ArgsTuple.Item1, ArgsTuple.Item2, ArgsTuple.Item3, ArgsTuple.Item4);
+            this.Maker = Maker;
+        }
+    }
+    public static partial class FuncCall
+    {
+        public static FuncCall<R> Create<A1, A2, A3, A4, R>(Func<A1, A2, A3, A4, R> Maker, A1 Arg1, A2 Arg2, A3 Arg3, A4 Arg4) { return new FuncCallProc<A1, A2, A3, A4, R>(Maker, Arg1, Arg2, Arg3, Arg4); }
+    }
+
+    public class FuncCallProc<A1, A2, A3, A4, A5, R> : FuncCall<R>
+    {
+        public override Object Args { get { return ArgsTuple; } }
+        public override Func<R> Func { get; protected set; }
+
+        protected readonly Tuple<A1, A2, A3, A4, A5> ArgsTuple;
+        protected readonly Func<A1, A2, A3, A4, A5, R> Maker;
+
+        public override MakerInfo GetMakerInfo() { return new MakerInfo(Maker); }
+        public override object[] GetArgsArray() { return new object[] { ArgsTuple.Item1, ArgsTuple.Item2, ArgsTuple.Item3, ArgsTuple.Item4, ArgsTuple.Item5 }; }
+
+        public FuncCallProc(Func<A1, A2, A3, A4, A5, R> Maker, A1 Arg1, A2 Arg2, A3 Arg3, A4 Arg4, A5 Arg5)
+        {
+            this.ArgsTuple = Tuple.Create(Arg1, Arg2, Arg3, Arg4, Arg5);
+            this.Func = () => Maker(ArgsTuple.Item1, ArgsTuple.Item2, ArgsTuple.Item3, ArgsTuple.Item4, ArgsTuple.Item5);
+            this.Maker = Maker;
+        }
+    }
+    public static partial class FuncCall
+    {
+        public static FuncCall<R> Create<A1, A2, A3, A4, A5, R>(Func<A1, A2, A3, A4, A5, R> Maker, A1 Arg1, A2 Arg2, A3 Arg3, A4 Arg4, A5 Arg5) { return new FuncCallProc<A1, A2, A3, A4, A5, R>(Maker, Arg1, Arg2, Arg3, Arg4, Arg5); }
+    }
 }
