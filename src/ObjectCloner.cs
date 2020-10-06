@@ -3,6 +3,11 @@ using System.Reflection;
 
 namespace OpenLab.Plus.SystemPlus
 {
+    /// <summary>
+    /// ObjectCloner Can copy or clone objects via reflection
+    /// </summary>
+    /// <remarks>Open source software with MIT license</remarks>
+
     public partial class ObjectCloner
     {
         /// <summary>
@@ -79,7 +84,7 @@ namespace OpenLab.Plus.SystemPlus
         }
 
         /// <summary>
-        /// Create an object clone and copies propertites from one object to another (shallow clone)
+        /// Create an object clone and copies propertites from source object to clone (shallow clone)
         /// </summary>
         /// <param name="Source">The source object</param>
         /// <param name="TargetMemberIsExcludedPredicate">A function to check should value be copied (default - all)</param>
