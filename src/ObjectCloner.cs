@@ -11,13 +11,13 @@ namespace OpenLab.Plus.SystemPlus
     public partial class ObjectCloner
     {
         /// <summary>
-        /// Copies maching fields and propertites from one object to another (shallow copy)
-        /// Any matching properties are written to the target.
+        /// Copies maching fields and propertites from one object to another (shallow copy).
+        /// Matching fields and properties with same name are assigned from source to target.
         /// </summary>
         /// <param name="Source">The source object</param>
         /// <param name="Target">The target object</param>
-        /// <param name="TargetMemberIsExcludedPredicate">A function to check should value be copied (default - all)</param>
-        /// <param name="MemberAccess">Reflection binding access for extracting fields</param>
+        /// <param name="MemberAccess">Field visibility filter bitmask for copying fields (default - all public instance fields)</param>
+        /// <param name="TargetMemberIsExcludedPredicate">A function to check, should value be copied (default - all)</param>
         public static void MemberwiseCopy(object Source, object Target, BindingFlags MemberAccess = BindingFlags.Public | BindingFlags.Instance, Func<MemberInfo, bool> TargetMemberIsExcludedPredicate = null)
         {
             MemberInfo[] targetMembers = Target.GetType().GetMembers(MemberAccess);
@@ -84,11 +84,12 @@ namespace OpenLab.Plus.SystemPlus
         }
 
         /// <summary>
-        /// Create an object clone and copies propertites from source object to clone (shallow clone)
+        /// Create an object clone and copies propertites from source object to clone (shallow clone).
+        /// By default all public instance propertiles copied from source to target.
         /// </summary>
         /// <param name="Source">The source object</param>
+        /// <param name="MemberAccess">Field visibility filter bitmask for copying fields (default - all public instance fields)</param>
         /// <param name="TargetMemberIsExcludedPredicate">A function to check should value be copied (default - all)</param>
-        /// <param name="MemberAccess">Reflection binding access for extracting fields</param>
         public static T CreateMemberwiseClone<T>(T Source, BindingFlags MemberAccess = BindingFlags.Public | BindingFlags.Instance, Func<MemberInfo, bool> TargetMemberIsExcludedPredicate = null) where T : class, new()
         {
             T Result = new T();

@@ -8,8 +8,17 @@
     using System;
 
     /// <summary>
-    /// Function call result.
-    /// If call failed with Exception, Exception property will be not null (and IsFaulted property will be true)
+    /// Factory for function call wrappers (wrapper encloses function + parameters to parameter-less callable object).<br/>
+    /// To wrap function <c>TheFunc(a, b, c)</c> call, use <c>TheFuncCall = FuncCall.Create(myFunc, a, b, c);</c>.<br/>
+    /// Then you may call original function with original arguments via <c>TheFuncCall.Invoke()</c> or <c>TheFuncCall.Call()</c><br/>
+    /// You may inspect arguments before a call
+    /// </summary>
+    public static partial class FuncCall {   }
+
+    /// <summary>
+    /// Function call result (Task-like pattern).<br/>
+    /// If call succeeded, <c>Result</c> property with hold function call result, <c>Exception</c> will be null and <c>IsFaulted</c> property will be false.<br/>
+    /// If call failed with Exception, <c>Exception</c> property will be not null and contains original excpetion thrown and <c>IsFaulted</c> property will be true.<br/>
     /// </summary>
     /// <typeparam name="R">Function Result type</typeparam>
     public class FuncCallResult<R>
@@ -23,11 +32,11 @@
     public static partial class FuncCall
     {
         /// <summary>
-        /// Function caller to obtain execution result as FuncCallResult
+        /// Calls argument-less function and obtain execution result as <see cref="FuncCallResult"/>
         /// </summary>
         /// <typeparam name="R">Function Result parameter</typeparam>
         /// <param name="Func">Function to call</param>
-        /// <returns>FuncCallResult as call result</returns>
+        /// <returns><see cref="FuncCallResult"/> as call result</returns>
         public static FuncCallResult<R> Call<R>(Func<R> Func)
         {
             try
@@ -42,22 +51,47 @@
     }
 
     /// <summary>
-    /// Function call object, containts Func and Args wrapped. To issue a call, use Call() method.
+    /// Wrapped function call object, containts original function and original arguments wrapped.<br/>
+    /// To issue an actual call, use <c>Invoke()</c> or <c>Call()</c> method.
     /// </summary>
     /// <typeparam name="R">Function Result type</typeparam>
     public abstract class FuncCall<R>
     {
+        /// <summary> 
+        /// Original function call arguments as tuple.<br/>
+        /// if original function does not have any arguments, null is returned.
+        /// </summary>
         public abstract Object Args { get; }
+
+        /// <summary> Closue that invokes original function with arguments stored in this object </summary>
+        /// <remarks> Note: You may call function via <c>Func.Invoke()</c> </remarks>
         public abstract Func<R> Func { get; protected set; }
+
+        /// <summary> Calls original function with arguments stored in this object (Task-like pattern)</summary>
+        /// <returns> Function execution result as <see cref="FuncCallResult"/> struct where call result or exception saved</returns>
         public FuncCallResult<R> Call() => FuncCall.Call(Func);
+
+        /// <summary> Calls original function with arguments stored in this object (Delegate-like pattern)</summary>
+        /// <returns> Function execution result or throws exception thrown by original function</returns>
         public virtual R Invoke() => this.Func.Invoke(); // Shortcut
+
+        /// <summary> Information about original function </summary>
         public class MakerInfo
         {
             public readonly Delegate Maker;
             public MakerInfo(Delegate Maker) { this.Maker = Maker; }
         }
 
+        /// <summary>Returns original function info.</summary>
+        /// <remarks>Note (alternative): You may call function via <c>GetMakerInfo().Maker.DynamicInvoke(GetArgsArray())</c></remarks>
+        /// <returns></returns>
         public abstract MakerInfo GetMakerInfo();
+
+        /// <summary>
+        /// Returns original function call arguments as array.<br/>
+        /// If original function does not have any arguments, null or empty array is returned (implementation defined).
+        /// </summary>
+        /// <remarks>Note (alternative): You may call function via <c>GetMakerInfo().Maker.DynamicInvoke(GetArgsArray())</c></remarks>
         public abstract object[] GetArgsArray();
     }
 
@@ -80,6 +114,12 @@
     }
     public static partial class FuncCall
     {
+        /// <summary>
+        /// Create wrapper that encloses function + parameters to parameter-less callable object (no args version).<br/>
+        /// To wrap function <c>TheFunc(a, b, c)</c> call, use <c>TheFuncCall = FuncCall.Create(myFunc, a, b, c);</c>.<br/>
+        /// Then you may call original function with original arguments via <c>TheFuncCall.Invoke()</c> or <c>TheFuncCall.Call()</c><br/>
+        /// You may inspect arguments before a call
+        /// </summary>
         public static FuncCall<R> Create<R>(Func<R> Maker) { return new FuncCallProc<R>(Maker); }
     }
 
@@ -103,6 +143,12 @@
     }
     public static partial class FuncCall
     {
+        /// <summary>
+        /// Create wrapper that encloses function + parameters to parameter-less callable object (1 arg version).<br/>
+        /// To wrap function <c>TheFunc(a)</c> call, use <c>TheFuncCall = FuncCall.Create(myFunc, a);</c>.<br/>
+        /// Then you may call original function with original arguments via <c>TheFuncCall.Invoke()</c> or <c>TheFuncCall.Call()</c><br/>
+        /// You may inspect arguments before a call
+        /// </summary>
         public static FuncCall<R> Create<A1, R>(Func<A1, R> Maker, A1 Arg1) { return new FuncCallProc<A1, R>(Maker, Arg1); }
     }
 
@@ -126,6 +172,12 @@
     }
     public static partial class FuncCall
     {
+        /// <summary>
+        /// Create wrapper that encloses function + parameters to parameter-less callable object (2 args version).<br/>
+        /// To wrap function <c>TheFunc(a, b)</c> call, use <c>TheFuncCall = FuncCall.Create(myFunc, a, b);</c>.<br/>
+        /// Then you may call original function with original arguments via <c>TheFuncCall.Invoke()</c> or <c>TheFuncCall.Call()</c><br/>
+        /// You may inspect arguments before a call
+        /// </summary>
         public static FuncCall<R> Create<A1, A2, R>(Func<A1, A2, R> Maker, A1 Arg1, A2 Arg2) { return new FuncCallProc<A1, A2, R>(Maker, Arg1, Arg2); }
     }
 
@@ -149,6 +201,12 @@
     }
     public static partial class FuncCall
     {
+        /// <summary>
+        /// Create wrapper that encloses function + parameters to parameter-less callable object (3 args version).<br/>
+        /// To wrap function <c>TheFunc(a, b, c)</c> call, use <c>TheFuncCall = FuncCall.Create(myFunc, a, b, c);</c>.<br/>
+        /// Then you may call original function with original arguments via <c>TheFuncCall.Invoke()</c> or <c>TheFuncCall.Call()</c><br/>
+        /// You may inspect arguments before a call
+        /// </summary>
         public static FuncCall<R> Create<A1, A2, A3, R>(Func<A1, A2, A3, R> Maker, A1 Arg1, A2 Arg2, A3 Arg3) { return new FuncCallProc<A1, A2, A3, R>(Maker, Arg1, Arg2, Arg3); }
     }
 
@@ -172,6 +230,12 @@
     }
     public static partial class FuncCall
     {
+        /// <summary>
+        /// Create wrapper that encloses function + parameters to parameter-less callable object (4 args version).<br/>
+        /// To wrap function <c>TheFunc(a, b, c, d)</c> call, use <c>TheFuncCall = FuncCall.Create(myFunc, a, b, c, d);</c>.<br/>
+        /// Then you may call original function with original arguments via <c>TheFuncCall.Invoke()</c> or <c>TheFuncCall.Call()</c><br/>
+        /// You may inspect arguments before a call
+        /// </summary>
         public static FuncCall<R> Create<A1, A2, A3, A4, R>(Func<A1, A2, A3, A4, R> Maker, A1 Arg1, A2 Arg2, A3 Arg3, A4 Arg4) { return new FuncCallProc<A1, A2, A3, A4, R>(Maker, Arg1, Arg2, Arg3, Arg4); }
     }
 
@@ -195,6 +259,12 @@
     }
     public static partial class FuncCall
     {
+        /// <summary>
+        /// Create wrapper that encloses function + parameters to parameter-less callable object (5 args version).<br/>
+        /// To wrap function <c>TheFunc(a, b, c, d, e)</c> call, use <c>TheFuncCall = FuncCall.Create(myFunc, a, b, c, d, e);</c>.<br/>
+        /// Then you may call original function with original arguments via <c>TheFuncCall.Invoke()</c> or <c>TheFuncCall.Call()</c><br/>
+        /// You may inspect arguments before a call
+        /// </summary>
         public static FuncCall<R> Create<A1, A2, A3, A4, A5, R>(Func<A1, A2, A3, A4, A5, R> Maker, A1 Arg1, A2 Arg2, A3 Arg3, A4 Arg4, A5 Arg5) { return new FuncCallProc<A1, A2, A3, A4, A5, R>(Maker, Arg1, Arg2, Arg3, Arg4, Arg5); }
     }
 }

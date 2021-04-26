@@ -10,10 +10,12 @@
     using System.Collections.Generic;
 
     /// <summary>
-    /// ReadOnlyRangeList Numerical Range that acts as a IList&lt;<typeparamref name="T"/>&gt; (where T is any integer type).
-    /// Similar to Enumerable.Range(int start, int count), but also exposes IList interfaces (read only).
-    /// To construct instance of this class use EnumerablePlus.RangeAsList(start, count).
-    /// To construct pure int instance of this class use EnumerablePlus.RangeList(int start, int count).
+    /// ReadOnlyRangeList Numerical Range that acts as a <c>IList&lt;<typeparamref name="T"/>&gt;</c> (where T is any integer type).<br/>
+    /// Similar to <c>Enumerable.Range(int start, int count)</c>, but also exposes <c>IList</c> interface (read only).
+    /// <br/>
+    /// To construct pure int instance of this class use <c>EnumerablePlus.RangeList(int start, int count)</c>.
+    /// <br/>
+    /// To construct typed T instance of this class use <c>EnumerablePlus.RangeAsList((T)start, count)</c> or <c>EnumerablePlus.RangeAsList((T)count)</c>.
     /// </summary>
     /// <typeparam name="T">Integral type (sbyte,byte,short,ushort,int,uint,long,ulong)</typeparam>
     public class ReadOnlyRangeList<T> : IList<T> where T : IComparable
@@ -332,8 +334,8 @@
         public static ReadOnlyRangeList<UInt64> RangeAsList(UInt64 count) => new ReadOnlyRangeList<UInt64>(0, new UInt64ValueHandler().CastToInt(count), new UInt64ValueHandler());
 
         /// <summary>
-        /// Pure ReadOnly List of int (Similar to Enumerable.Range).
-        /// This method is drop-in replacement for Enumerable.Range, but returned IList&lt;int&gt;
+        /// Pure ReadOnly List of int (Similar to <c>Enumerable.Range</c>).
+        /// This method is drop-in replacement for <c>Enumerable.Range</c>, but returns <c>IList&lt;int&gt;</c>
         /// </summary>
         /// <param name="start">start value to count from</param>
         /// <param name="count">total values in list</param>
