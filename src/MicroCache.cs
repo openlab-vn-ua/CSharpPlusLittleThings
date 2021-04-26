@@ -153,7 +153,7 @@
         /// <param name="Key">Key to asssociate with the result</param>
         /// <param name="Factory">Function to produce the result</param>
         /// <returns>Function call result ether actual or cached</returns>
-        protected R GetOrMake<R>(Object Key, Func<R> Factory)
+        protected R GetOrMakeWithKey<R>(Object Key, Func<R> Factory)
         {
             Interlocked.Increment(ref CacheStatUseCount);
 
@@ -294,7 +294,7 @@
         /// <returns>Function call result ether actual or cached</returns>
         public R GetOrMake<R>(FuncCall<R> A)
         {
-            return GetOrMake<R>(DeriveKey(A), A.Func);
+            return GetOrMakeWithKey<R>(DeriveKey(A), A.Func);
         }
     }
 

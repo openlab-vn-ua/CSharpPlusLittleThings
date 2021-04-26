@@ -50,19 +50,6 @@ namespace OpenLab.Plus.UnitTest
             Assert.AreEqual(6, MyCache.GetOrMake(Maker1, 5));
             Assert.AreEqual(6, MyCache.GetOrMake(Maker1, 5));
             Assert.AreEqual(2, Maker1CallCount);
-
-            MyCache.DefCacheItemAbsoluteExpirationTicksCount = 200;
-            Thread.Sleep(100);
-            // (100 < 200) should not expiry yet
-            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
-            Assert.AreEqual(6, MyCache.GetOrMake(Maker1, 5));
-            Assert.AreEqual(2, Maker1CallCount);
-
-            Thread.Sleep(150);
-            // 100+150 > 200 (should now expiry yet)
-            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
-            Assert.AreEqual(6, MyCache.GetOrMake(Maker1, 5));
-            Assert.AreEqual(2+2, Maker1CallCount);
         }
 
         protected int Func2X(int a) { return a * 2; }
@@ -112,6 +99,213 @@ namespace OpenLab.Plus.UnitTest
 
             Assert.AreEqual(11, MyCache.GetOrMake(Obj1.Func2X, 5));
             Assert.AreEqual(11, MyCache.GetOrMake(Obj2.Func2X, 5)); // will be 12 if Obj2 called (but it should not)
+        }
+
+        [TestMethod]
+        public void InvalidateEntries()
+        {
+            var MyCache = new MicroCache();
+
+            int Maker1CallCount = 0;
+            Func<int, long> Maker1 = (a) =>
+            {
+                Maker1CallCount++;
+                return a + 1;
+            };
+
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
+            Assert.AreEqual(1, Maker1CallCount);
+
+            MyCache.Invalidate();
+
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
+            Assert.AreEqual(2, Maker1CallCount);
+        }
+
+        [TestMethod]
+        public void InvalidateByHitCountPolicy()
+        {
+            var MyCache = new MicroCache();
+
+            int Maker1CallCount = 0;
+            Func<int, long> Maker1 = (a) =>
+            {
+                Maker1CallCount++;
+                return a + 1;
+            };
+
+            MyCache.DefCacheItemHitCountExpirationCount = 3;
+
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4)); // After call: HitCount = 0
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4)); // After call: HitCount = 1
+            Assert.AreEqual(1, Maker1CallCount);
+
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4)); // After call: HitCount = 2
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4)); // After call: HitCount = 3
+            Assert.AreEqual(1, Maker1CallCount);
+
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4)); // Before call: HitCount = 3, entry will be invalidated
+            Assert.AreEqual(2, Maker1CallCount);
+        }
+
+        [TestMethod]
+        public void InvalidateByLastAccessTimeTicks()
+        {
+            var MyCache = new MicroCache();
+
+            int Maker1CallCount = 0;
+            Func<int, long> Maker1 = (a) =>
+            {
+                Maker1CallCount++;
+                return a + 1;
+            };
+
+            MyCache.DefCacheItemAccessExpirationTicksCount = 100;
+
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
+            Assert.AreEqual(1, Maker1CallCount);
+
+            Thread.Sleep(200);
+
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
+            Assert.AreEqual(2, Maker1CallCount);
+        }
+
+        [TestMethod]
+        public void InvalidateByMakeTimeTicks()
+        {
+            var MyCache = new MicroCache();
+
+            int Maker1CallCount = 0;
+            Func<int, long> Maker1 = (a) =>
+            {
+                Maker1CallCount++;
+                return a + 1;
+            };
+
+            // Same maker, 2 differnt set of arguments (should be 2 calls), 3 calls per set
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
+            Assert.AreEqual(6, MyCache.GetOrMake(Maker1, 5));
+            Assert.AreEqual(6, MyCache.GetOrMake(Maker1, 5));
+            Assert.AreEqual(6, MyCache.GetOrMake(Maker1, 5));
+            Assert.AreEqual(2, Maker1CallCount);
+
+            MyCache.DefCacheItemAbsoluteExpirationTicksCount = 200;
+            Thread.Sleep(100);
+            // (100 < 200) should not expiry yet
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
+            Assert.AreEqual(6, MyCache.GetOrMake(Maker1, 5));
+            Assert.AreEqual(2, Maker1CallCount);
+
+            Thread.Sleep(150);
+            // 100+150 > 200 (should now expiry) [both entrys]
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
+            Assert.AreEqual(6, MyCache.GetOrMake(Maker1, 5));
+            Assert.AreEqual(2 + 2, Maker1CallCount);
+        }
+    }
+
+    [TestClass]
+    public class MicroCacheExtShould
+    {
+        class MicroCacheExt : MicroCache
+        {
+            // Grant access to protected methods
+            public new R GetOrMakeWithKey<R>(Object Key, Func<R> Factory) { return base.GetOrMakeWithKey<R>(Key, Factory); }
+            public new void InvalidateKey(Object Key) { base.InvalidateKey(Key); }
+            public new Object DeriveKey<R>(FuncCall<R> Call) { return base.DeriveKey(Call); }
+        }
+
+        [TestMethod]
+        public void BeCreated()
+        {
+            var MyCache = new MicroCacheExt();
+        }
+
+        [TestMethod]
+        public void SupportInvalidateKey()
+        {
+            var MyCache = new MicroCacheExt();
+
+            int Maker1CallCount = 0;
+            Func<int, long> Maker1 = (a) =>
+            {
+                Maker1CallCount++;
+                return a + 1;
+            };
+
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
+            Assert.AreEqual(1, Maker1CallCount);
+
+            // Still the same key, but added explicitely
+            Assert.AreEqual(5, MyCache.GetOrMakeWithKey(MyCache.DeriveKey(FuncCall.Create(Maker1, 4)), () => Maker1(4)));
+            Assert.AreEqual(1, Maker1CallCount);
+
+            MyCache.InvalidateKey(MyCache.DeriveKey(FuncCall.Create(Maker1, 4)));
+
+            // Recreation of value as key is invalidated
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
+            Assert.AreEqual(2, Maker1CallCount);
+        }
+
+        [TestMethod]
+        public void SupportCustomKeys()
+        {
+            var MyCache = new MicroCacheExt();
+
+            int Maker1CallCount = 0;
+            Func<int, long> Maker1 = (a) =>
+            {
+                Maker1CallCount++;
+                return a + 1;
+            };
+
+            Assert.AreEqual(5, MyCache.GetOrMakeWithKey("AAA", () => Maker1(4)));
+            Assert.AreEqual(5, MyCache.GetOrMakeWithKey("AAA", () => Maker1(4)));
+            Assert.AreEqual(1, Maker1CallCount);
+
+            // Function is the same, but key is different
+            Assert.AreEqual(5, MyCache.GetOrMakeWithKey("BBB", () => Maker1(4)));
+            Assert.AreEqual(5, MyCache.GetOrMakeWithKey("BBB", () => Maker1(4)));
+            Assert.AreEqual(2, Maker1CallCount);
+
+            // Function is the same, but key is different, interlevaed (still no calls)
+            Assert.AreEqual(5, MyCache.GetOrMakeWithKey("AAA", () => Maker1(4)));
+            Assert.AreEqual(5, MyCache.GetOrMakeWithKey("BBB", () => Maker1(4)));
+            Assert.AreEqual(2, Maker1CallCount);
+
+            MyCache.InvalidateKey("AAA");
+
+            // Function is the same, one of 2 keys invalitaed, only one extra call
+            Assert.AreEqual(5, MyCache.GetOrMakeWithKey("AAA", () => Maker1(4)));
+            Assert.AreEqual(5, MyCache.GetOrMakeWithKey("BBB", () => Maker1(4)));
+            Assert.AreEqual(3, Maker1CallCount);
+        }
+
+        [TestMethod]
+        public void SupportDirectCallWithKeyDerivation()
+        {
+            var MyCache = new MicroCacheExt();
+
+            int Maker1CallCount = 0;
+            Func<int, long> Maker1 = (a) =>
+            {
+                Maker1CallCount++;
+                return a + 1;
+            };
+
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
+            Assert.AreEqual(5, MyCache.GetOrMake(Maker1, 4));
+            Assert.AreEqual(5, MyCache.GetOrMakeWithKey(MyCache.DeriveKey(FuncCall.Create(Maker1, 4)), () => Maker1(4)));
+            Assert.AreEqual(1, Maker1CallCount);
         }
     }
 }
