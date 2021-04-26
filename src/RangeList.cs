@@ -48,7 +48,7 @@
                 { 
                     Handler.AddInt(start, count - 1); 
                 } 
-                catch(Exception e) 
+                catch(Exception) 
                 { 
                     throw new ArgumentOutOfRangeException();
                 }
