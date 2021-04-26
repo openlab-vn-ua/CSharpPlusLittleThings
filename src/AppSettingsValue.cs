@@ -59,5 +59,10 @@ namespace OpenLab.Plus.Configuration
         }
 
         public ItemType Value => SetupValue.Value;
+
+        public override string ToString()
+        {
+            return Value.ToString();
+        }
     }
 }
