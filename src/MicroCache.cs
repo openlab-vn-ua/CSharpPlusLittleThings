@@ -1,16 +1,16 @@
 ﻿namespace OpenLab.Plus.Caching
 {
-    /// <summary>
-    /// Function to transform function and its arguments into FuncCall object that call be called via Exec method
-    /// </summary>
-    /// <remarks>Open source software with MIT license</remarks>
-
     using System;
     using System.Collections.Generic;
 
     using OpenLab.Plus.Func;
     using OpenLab.Plus;
     using System.Threading;
+
+    /// <summary>
+    /// Micro cache system to cache operation inside the proccess
+    /// </summary>
+    /// <remarks>Open source software with MIT license</remarks>
 
     public partial class MicroCache
     {
@@ -146,13 +146,13 @@
         }
 
         /// <summary>
-        /// Core cache proc method. 
+        /// Core cache proc method [low level].
         /// Will try to find result in cache based on key, else will call the func and store result in cache attached to the key.
         /// </summary>
         /// <typeparam name="R">Function result type</typeparam>
         /// <param name="Key">Key to asssociate with the result</param>
         /// <param name="Factory">Function to produce the result</param>
-        /// <returns></returns>
+        /// <returns>Function call result ether actual or cached</returns>
         protected R GetOrMake<R>(Object Key, Func<R> Factory)
         {
             Interlocked.Increment(ref CacheStatUseCount);
@@ -248,20 +248,16 @@
         }
 
         /// <summary>
-        /// Master cache proc method. Will try to find result in cache based on function args, else will call the func and store result in cache.
-        /// Usage: <br/>
-        /// <code>
-        /// MyCache.GetOrMake(FuncCall.Create((a, b) => { /* func code */ }, value4a, value4b)); <br/>
-        /// //Alternative (Extension mehods): <br/>
-        /// MyCache.GetOrMake((a, b) => { /* func code */ }, value4a, value4b); <br/>
-        /// </code>
+        /// Core cache proc method [low level].
+        /// Will invalidate single key (if any) if value stored in cache becomes obsolete.
         /// </summary>
-        /// <typeparam name="R"></typeparam>
-        /// <param name="A">Function call to proccess or extract from cache</param>
-        /// <returns>Expected function result ether actual or cached</returns>
-        public R GetOrMake<R>(FuncCall<R> A)
+        /// <param name="Key">Key to asssociate with the result</param>
+        protected void InvalidateKey(Object Key)
         {
-            return GetOrMake<R>(A.Args, A.Func);
+            lock (Cache)
+            {
+                Cache.Remove(Key);
+            }
         }
     }
 
@@ -273,16 +269,114 @@
         // (we use same object, as all void args considered the same)
         protected static Object ZERO_ARG_DEF_KEY = new Object();
 
-        protected object DeriveKey<R>(FuncCall<R> Call)
+        /// <summary>
+        /// Key derivation function for <see cref="FuncCall"/> like object
+        /// </summary>
+        /// <typeparam name="R">Function result type (inferred automatically)</typeparam>
+        /// <param name="Call">Wrapped function call as <c>FuncCall</c> object</param>
+        /// <returns>Key suitable to be used in cache</returns>
+        protected virtual object DeriveKey<R>(FuncCall<R> Call)
         {
             return Tuple.Create(Call.GetMakerInfo().Maker.Method, Call.Args ?? ZERO_ARG_DEF_KEY);
         }
 
-        public R GetOrMake<R>(Func<R> Maker) { var C = new FuncCallProc<R>(Maker); return GetOrMake(DeriveKey(C), C.Func); }
-        public R GetOrMake<A1, R>(Func<A1, R> Maker, A1 arg1) { var C = new FuncCallProc<A1, R>(Maker, arg1); return GetOrMake(DeriveKey(C), C.Func); }
-        public R GetOrMake<A1, A2, R>(Func<A1, A2, R> Maker, A1 arg1, A2 arg2) { var C = new FuncCallProc<A1, A2, R>(Maker, arg1, arg2); return GetOrMake(DeriveKey(C), C.Func); }
-        public R GetOrMake<A1, A2, A3, R>(Func<A1, A2, A3, R> Maker, A1 arg1, A2 arg2, A3 arg3) { var C = new FuncCallProc<A1, A2, A3, R>(Maker, arg1, arg2, arg3); return GetOrMake(DeriveKey(C), C.Func); }
-        public R GetOrMake<A1, A2, A3, A4, R>(Func<A1, A2, A3, A4, R> Maker, A1 arg1, A2 arg2, A3 arg3, A4 arg4) { var C = new FuncCallProc<A1, A2, A3, A4, R>(Maker, arg1, arg2, arg3, arg4); return GetOrMake(DeriveKey(C), C.Func); }
-        public R GetOrMake<A1, A2, A3, A4, A5, R>(Func<A1, A2, A3, A4, A5, R> Maker, A1 arg1, A2 arg2, A3 arg3, A4 arg4, A5 arg5) { var C = new FuncCallProc<A1, A2, A3, A4, A5, R>(Maker, arg1, arg2, arg3, arg4, arg5); return GetOrMake(DeriveKey(C), C.Func); }
+        /// <summary>
+        /// Master cache proc method. Will try to find result in cache based on function args, else will call the func and store result in cache.
+        /// Usage: <br/>
+        /// <code>
+        /// MyCache.GetOrMake(FuncCall.Create((a, b) => { /* func code */ }, argA, argB ...)); <br/>
+        /// //Alternative (Extension mehods): <br/>
+        /// MyCache.GetOrMake((a, b) => { /* func code */ }, argA, argB ...); <br/>
+        /// </code>
+        /// </summary>
+        /// <typeparam name="R">Function result type (inferred automatically)</typeparam>
+        /// <param name="A">Function call to proccess</param>
+        /// <returns>Function call result ether actual or cached</returns>
+        public R GetOrMake<R>(FuncCall<R> A)
+        {
+            return GetOrMake<R>(DeriveKey(A), A.Func);
+        }
+    }
+
+    public partial class MicroCache
+    {
+
+        /// <summary>
+        /// Function call cache. Usage: <br/>
+        /// <code>
+        /// MyCache.GetOrMake(() => { /* func code */ });<br/>
+        /// // or<br/>
+        /// MyCache.GetOrMake(MyFunc);
+        /// </code>
+        /// </summary>
+        /// <typeparam name="R">Function result type (inferred automatically)</typeparam>
+        /// <param name="Maker">Function to produce the result</param>
+        /// <returns>Function call result ether actual or cached</returns>
+        public R GetOrMake<R>(Func<R> Maker) { var C = new FuncCallProc<R>(Maker); return GetOrMake(C); }
+
+        /// <summary>
+        /// Function call cache (1 arg version). Usage: <br/>
+        /// <code>
+        /// MyCache.GetOrMake((a) => { /* func code */ }, argA);<br/>
+        /// // or<br/>
+        /// MyCache.GetOrMake(MyFunc, argA);
+        /// </code>
+        /// </summary>
+        /// <typeparam name="R">Function result type (inferred automatically)</typeparam>
+        /// <param name="Maker">Function to produce the result</param>
+        /// <returns>Function call result ether actual or cached</returns>
+        public R GetOrMake<A1, R>(Func<A1, R> Maker, A1 arg1) { var C = new FuncCallProc<A1, R>(Maker, arg1); return GetOrMake(C); }
+
+        /// <summary>
+        /// Function call cache (2 args version). Usage: <br/>
+        /// <code>
+        /// MyCache.GetOrMake((a, b) => { /* func code */ }, argA, argB);<br/>
+        /// // or<br/>
+        /// MyCache.GetOrMake(MyFunc, argA, argB);
+        /// </code>
+        /// </summary>
+        /// <typeparam name="R">Function result type (inferred automatically)</typeparam>
+        /// <param name="Maker">Function to produce the result</param>
+        /// <returns>Function call result ether actual or cached</returns>
+        public R GetOrMake<A1, A2, R>(Func<A1, A2, R> Maker, A1 arg1, A2 arg2) { var C = new FuncCallProc<A1, A2, R>(Maker, arg1, arg2); return GetOrMake(C); }
+
+        /// <summary>
+        /// Function call cache (3 args version). Usage: <br/>
+        /// <code>
+        /// MyCache.GetOrMake((a, b, c) => { /* func code */ }, argA, argB, argC);<br/>
+        /// // or<br/>
+        /// MyCache.GetOrMake(MyFunc, argA, argB, argC);
+        /// </code>
+        /// </summary>
+        /// <typeparam name="R">Function result type (inferred automatically)</typeparam>
+        /// <param name="Maker">Function to produce the result</param>
+        /// <returns>Function call result ether actual or cached</returns>
+        public R GetOrMake<A1, A2, A3, R>(Func<A1, A2, A3, R> Maker, A1 arg1, A2 arg2, A3 arg3) { var C = new FuncCallProc<A1, A2, A3, R>(Maker, arg1, arg2, arg3); return GetOrMake(C); }
+
+        /// <summary>
+        /// Function call cache (4 args version). Usage: <br/>
+        /// <code>
+        /// MyCache.GetOrMake((a, b, c, d) => { /* func code */ }, argA, argB, argC, argD);<br/>
+        /// // or<br/>
+        /// MyCache.GetOrMake(MyFunc, argA, argB, argC, argD);
+        /// </code>
+        /// </summary>
+        /// <typeparam name="R">Function result type (inferred automatically)</typeparam>
+        /// <param name="Maker">Function to produce the result</param>
+        /// <returns>Function call result ether actual or cached</returns>
+        public R GetOrMake<A1, A2, A3, A4, R>(Func<A1, A2, A3, A4, R> Maker, A1 arg1, A2 arg2, A3 arg3, A4 arg4) { var C = new FuncCallProc<A1, A2, A3, A4, R>(Maker, arg1, arg2, arg3, arg4); return GetOrMake(C); }
+
+        /// <summary>
+        /// Function call cache (5 args version). Usage: <br/>
+        /// <code>
+        /// MyCache.GetOrMake((a, b, c, d, e) => { /* func code */ }, argA, argB, argC, argD, argE);<br/>
+        /// // or<br/>
+        /// MyCache.GetOrMake(MyFunc, argA, argB, argC, argD, argE);
+        /// </code>
+        /// </summary>
+        /// <typeparam name="R">Function result type (inferred automatically)</typeparam>
+        /// <param name="Maker">Function to produce the result</param>
+        /// <returns>Function call result ether actual or cached</returns>
+        public R GetOrMake<A1, A2, A3, A4, A5, R>(Func<A1, A2, A3, A4, A5, R> Maker, A1 arg1, A2 arg2, A3 arg3, A4 arg4, A5 arg5) { var C = new FuncCallProc<A1, A2, A3, A4, A5, R>(Maker, arg1, arg2, arg3, arg4, arg5); return GetOrMake(C); }
     }
 }
