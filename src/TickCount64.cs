@@ -10,20 +10,21 @@ namespace OpenLab.Plus
     using System;
     using System.Reflection;
 
-    /// <summary>
-    /// Exte
-    /// </summary>
-
     public static partial class EnvironmentPlus
     {
         #if NETCOREAPP
 
         /// <summary>
-        /// Number of miliseconds since system started (always >= 0)
+        /// Number of miliseconds since system started (always >= 0) as long int
         /// </summary>
         public static long TickCount64 { get { return System.Environment.TickCount64; } }
 
         #else
+
+        private static long CalcTickCount64ByInt32(int TickCount)
+        {
+            return (uint)(TickCount);
+        }
 
         private static long GetTickCount64()
         {
@@ -34,7 +35,7 @@ namespace OpenLab.Plus
 
                 if (TheProp == null)
                 {
-                    return (Environment.TickCount & Int32.MaxValue); // Fallback // remove sign
+                    return CalcTickCount64ByInt32(Environment.TickCount); // Fallback
                 }
 
                 var TheValObj = TheProp.GetValue(null); // static
@@ -46,17 +47,18 @@ namespace OpenLab.Plus
                 }
                 else
                 {
-                    return (Environment.TickCount & Int32.MaxValue); // Fallback // remove sign
+                    return CalcTickCount64ByInt32(Environment.TickCount); // Fallback
                 }
             }
             catch
             {
-                return (Environment.TickCount & Int32.MaxValue); // Fallback // remove sign
+                return CalcTickCount64ByInt32(Environment.TickCount); // Fallback
             }
         }
 
         /// <summary>
-        /// Number of miliseconds since system started (always >= 0)
+        /// Number of miliseconds since system started (always >= 0) as long int.<br/>
+        /// Internaly fallbacks to <c><see cref="Environment.TickCount" /></c> if TickCount64 is not available
         /// </summary>
         public static long TickCount64 { get { return GetTickCount64(); } }
 
