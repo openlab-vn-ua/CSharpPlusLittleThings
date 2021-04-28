@@ -9,7 +9,7 @@ The toolbox include:
 - [RangeList](#RangeList) : Drop in replacement of Enumeration.Range but with IList interface
 - [RangeAsList](#RangeAsList) : Extension to EnumerationPlus.RangeList for all integral types
 - [EmptyList](#EmptyList) : Drop in replacement of Enumeration.Empty but with IList interface
-- [FuncCall](#FuncCall) : Defferned function call (to allow argument inspection before call)
+- [FuncCall](#FuncCall) : Deferred function call (to allow argument inspection before call)
 - [TickCount64](#TickCount64) : Portable implemenation of Environment.TickCount64
 - [MicroCache](#MicroCache) : Simple In-proccess function call implemenation on top of [FuncCall](#FuncCall)
 - [AppSettingsValue](#AppSettingsValue) : App settings reader using extended Lazy pattern
