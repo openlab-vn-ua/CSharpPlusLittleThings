@@ -1,6 +1,7 @@
 # CSharpPlusLittleThings
 
-Bunch of cs utilities and usefull classes that anyone can use by just drag-in-drop.
+Bunch of cs utilities and useful classes that anyone can use by just drag-in-drop.
+
 Most modules are self-contained, so you may just use single module file.
 
 The toolbox include:
@@ -10,18 +11,18 @@ The toolbox include:
 - [RangeAsList](#RangeAsList) : Extension to EnumerationPlus.RangeList for all integral types
 - [EmptyList](#EmptyList) : Drop in replacement of Enumeration.Empty but with IList interface
 - [FuncCall](#FuncCall) : Deferred function call (to allow argument inspection before call)
-- [TickCount64](#TickCount64) : Portable implemenation of Environment.TickCount64
-- [MicroCache](#MicroCache) : Simple In-proccess function call implemenation on top of [FuncCall](#FuncCall)
+- [TickCount64](#TickCount64) : Portable implementation of Environment.TickCount64
 - [AppSettingsValue](#AppSettingsValue) : App settings reader using extended Lazy pattern
+- [MicroCache](#MicroCache) : Simple in-process function call cache implementation on top of [FuncCall](#FuncCall)
 
 ## ObjectCloner
 Clone object via reflection.
-Usefull to clone simple objects that do not implement ICloneable interface
+Useful to clone simple objects that do not implement ICloneable interface
 ```
 var TheClone = ObjectCloner.CreateMemberwiseClone(TheSource);
 ```
 Copy data from one object to another via reflection. 
-Usefull to copy data between objects with similar structure, but different types
+Useful to copy data between objects with similar structure, but different types
 ```
 ObjectCloner.MemberwiseCopy(TheSource,TheTarget);
 ```
@@ -42,9 +43,9 @@ var SimpleRangeList = EnumerablePlus.RangeList(0,30);
 * All host type range support for Start parameter (but Count naturally restricted to Int32 by IList itself)
 * Suports `RangeAsList(T Count)` additional maker factory function to provide 0..Count-1 elements
 ```
-var TheRangeListOfUInts = EnumerablePlus.RangeAsList((uint)0,10);    // 10 items with values [0..9]
-var SimpleRangeListOfLongs = EnumerablePlus.RangeAsList((long)5,10); // 10 items with values [5..14]
-var AnotherRangeListOfBytes = EnumerablePlus.RangeAsList((byte)30);  // 30 items with values [0..29]
+var TheRangeListOfUInts = EnumerablePlus.RangeAsList((uint)0,10);    // 10 uints with values [0..9]
+var SimpleRangeListOfLongs = EnumerablePlus.RangeAsList((long)5,10); // 10 longs with values [5..14]
+var AnotherRangeListOfBytes = EnumerablePlus.RangeAsList((byte)30);  // 30 bytes with values [0..29]
 ```
 
 ## EmptyList
@@ -85,24 +86,55 @@ You may use `MyCall.GetMakerInfo()` to check original function properties before
 
 ## TickCount64
 
-`EnvironmentPlus.TickCount64` is a portable implemenation of `Environment.TickCount64`.
+`EnvironmentPlus.TickCount64` is a portable implementation of `Environment.TickCount64`.
 It fallbacks to unsigned `Environment.TickCount` if `Environment.TickCount64` is not available on target platform.
+
+## AppSettingsValue
+
+Lazy pattern to extract AppSettingsValue once, with type, default and validation. Usage:
+```
+// Declare MyParm to extract from app.config MyParamName as integer
+int MyParam = new AppSettingsValue<int>("MyParamName"); // with be extracted once
+
+// Declare MyParm2 to extract from app.config MyParam2Name as integer with default value of 100 and > 0 requirement
+int MyParam2 = new AppSettingsValue<int>("MyParam2Name", 100, (i) => i > 0);
+
+... MyMethod(...)
+{
+  //...
+  if (MyParm.Value > 0)  // your code
+  //...
+  if (MyParm2.Value > 1000)  // your code
+}
+```
+Default value is used in case there is no value in configuration file or value if invalid (ether cannot be parsed or reject by validation function, if any)
 
 ## MicroCache
 
-Micro cache system to cache operation inside the proccess. The data stored inside the proccess.
-Usage:
+Micro cache is simple function call cache implementation speedup operations inside the process.
+* Simple API (just use single method `GetOrMake`)
+* Simple operation convention: assumes, that the function and it's explicit arguments are completely defines result
+* The function and values of call arguments define cache key (different functions with same parameters may share cache)
+* Any number of caches may co-exist in the same process (just instantiate as many `MicroCache` objects as you want
+* Supports closures (uses only explicit arguments for keys)
+* The data stored inside proccess memory
+* Supports cache invalidation
+* Supports cache purge to free up resources (can be done by external timer)
+* Does not start any threads by itself (purge for expired entries is done at access time)
+* Supports multiple expiration policies (you may create custom by override `MicroCache.IsExpiried`)
+
+Usage Example:
 ```
 class MyClass
 {
-  //Define cache to speedup lenghly operation in sope of this class
+  //Define cache to speedup lengthy operation in scope of this class
   private MicroCache MyCache = new MicroCache();
 
   //Assume these are function that do some heavy work
   private int CalcComplexStuffImplemenation(int a, int b) // ... some code
   private long CalcComplexStuffImplemenation(int a, int b) // ... some code
 
-  // You may cache result of operation (different functions may be cached in signle cache)
+  // You may cache result of operation (different functions may be cached in single cache)
   public int CalcComplexStuff(a, b) { return MyCache.GetOrMake(CalcComplexStuffImplemenation, a, b); }
   public long CalcAnotherComplexStuff(a, b) { return MyCache.GetOrMake(CalcAnotherComplexStuffImplemenation, a, b); }
 
@@ -127,35 +159,15 @@ class MyClass
   {
     // You may adjust default expiration polity for items
     MyCache.DefCacheItemAbsoluteExpirationTicksCount = 60*1000; // expiry 1 min from creation
-    MyCache.DefCacheItemAccessExpirationTicksCount = 10*1000; // 10 sec from last acces
+    MyCache.DefCacheItemAccessExpirationTicksCount = 10*1000; // 10 sec from last access
     MyCache.DefCacheItemHitCountExpirationCount = 100; // every 100 hits
-    // You may 
+    // You may implement more complex expiration logic by overwrite MicroCache.IsExprired method
   }
 
-  // You may purge expiried items to free up memory
+  // You may purge expired items to free up memory
   public void SomeMemoryCoslyOperation(...)
   {
     MyCache.Purge();
   }
 }
 ```
-
-## AppSettingsValue
-
-Lazy pattern to extract AppSettingsValue once, with type, default and validation. Usage:
-```
-// Declare MyParm to extract from app.config MyParamName as integer
-int MyParam = new AppSettingsValue<int>("MyParamName"); // with be extracted once
-
-// Declare MyParm2 to extract from app.config MyParam2Name as integer with default value of 100 and > 0 requirement
-int MyParam2 = new AppSettingsValue<int>("MyParam2Name", 100, (i) => i > 0);
-
-... MyMethod(...)
-{
-  //...
-  if (MyParm.Value > 0)  // your code
-  //...
-  if (MyParm2.Value > 1000)  // your code
-}
-```
-Default value is used in case there is no value in configuration file or value if invalid (ether cannot be parsed or reject by validation function, if any)
