@@ -112,7 +112,7 @@ Default value is used in case there is no value in configuration file or value i
 ## MicroCache
 
 Micro cache is simple function call cache implementation speedup operations inside the process.
-* Simple API (just use single method `GetOrMake`)
+* Simple API (just use single method `GetOrMake` : `var Result = MyCache.GetOrMake(MyFunc, MyArg1, MyArg2, ...)`)
 * Simple operation convention: assumes, that the function and it's explicit arguments are completely defines result
 * The function and values of call arguments define cache key (different functions with same parameters may share cache)
 * Any number of caches may co-exist in the same process (just instantiate as many `MicroCache` objects as you want
