@@ -15,12 +15,12 @@ The toolbox include:
 - [AppSettingsValue](#AppSettingsValue) : App settings reader using extended Lazy pattern
 
 ## ObjectCloner
-Clone object via reflection
+Clone object via reflection.
 Usefull to clone simple objects that do not implement ICloneable interface
 ```
 var TheClone = ObjectCloner.CreateMemberwiseClone(TheSource);
 ```
-Copy data from one object to another via reflection, 
+Copy data from one object to another via reflection. 
 Usefull to copy data between objects with similar structure, but different types
 ```
 ObjectCloner.MemberwiseCopy(TheSource,TheTarget);
@@ -31,7 +31,7 @@ ObjectCloner.MemberwiseCopy(TheSource,TheTarget);
 * Exports `IList<int>` interface (read only) in addition to `IEnumerable<int>`
 * All readers are 100% Thread safe
 * All readers and seeker operations are O(1), even IndexOf and Contains
-* Just use EnumerablePlus.RangeList instead of Enumerable.Range // drop-in replacement
+* Just use `EnumerablePlus.RangeList` instead of `Enumerable.Range` // drop-in replacement
 ```
 var SimpleRangeList = EnumerablePlus.RangeList(0,30);
 ```
@@ -58,22 +58,19 @@ var SimpleEmptyList = EnumerablePlus.EmptyList<int>();
  
 
 ## FuncCall
-Function call wrapper:
-Wrapper encloses function + parameters to parameter-less callable object:
+Function call wrapper: Wrapper encloses function + parameters to parameter-less callable object:
 ```
 var MyCall = FuncCall.Create((a, b, c) => { return a + b + c + 1; }, 1, 2, 3)
 //...
 var MyResult = MyCall.Invoke(); // invoke with args suppled on Create
 ```
-This creates "deffered" wrapped function call.
-You may inspect arguments before a call (and use them as a source for, say cache key generation).
-You may use `MyCall.Args` or `MyCall.GetArgsArray()` to inspect arguments given before the call.
-This would open way to efficient and simple caching of function calls.
-If source function does not take any arguments, content of `Args` is null, else it will be a tuple filled with arguments.
-You may use `MyCall.GetMakerInfo()` to check original function properties before the call.
-The parameter-less closue is available via `MyCall.Func<ResultType>`.
-Then you may call original function with original arguments via `TheFuncCall.Invoke()` or `TheFuncCall.Func.Invoke()` or `TheFuncCall.Call()`
-By calling via `FuncCall.Call()` you will obtain `FuncCallResult<ResultType>` object that acts alike `Task` object with `Result` and `Exception` properties:
+The wrapper creates "deferred" (or wrapped) pending function call. You may use `MyCall.Args` or `MyCall.GetArgsArray()` to inspect arguments given before the call.
+This would open way to efficient and simple caching of function calls (eg. you may use args as a source for, say cache key generation, see [MicroCache](#MicroCache))
+Then you may call original function with original arguments via:
+* `TheFuncCall.Invoke()` : delegate-like call
+* `TheFuncCall.Func.Invoke()` : direct closure call
+* `TheFuncCall.Call()` : Task like call (result will be `FuncCallResult<ResultType>` with `Result` and `Exception` properties)
+* `TheFuncCall.GetMakerInfo().Maker.DynamicInvoke(TheFuncCall.GetArgsArray())` : Exotic dynamic call scenario
 ```
 var MyCallResult = MyCall.Call(); // invoke with args suppled on Create
 if (MyCallResult.IsFaulted) { Console.Error.Write(MyCallResult.Exception); }
@@ -82,6 +79,9 @@ else
   // Use MyCallResult.Result
 }
 ```
+If source function does not take any arguments, content of `Args` is null, else it will be a tuple filled with arguments.
+You may use `MyCall.GetMakerInfo()` to check original function properties before the call.
+*The parameter-less closue function created is available via `MyCall.Func<ResultType>`.*
 
 ## TickCount64
 
