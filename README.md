@@ -70,8 +70,8 @@ This would open way to efficient and simple caching of function calls (eg. you m
 Then you may call original function with original arguments via:
 * `TheFuncCall.Invoke()` : delegate-like call
 * `TheFuncCall.Func.Invoke()` : direct closure call
-* `TheFuncCall.Call()` : Task like call (result will be `FuncCallResult<ResultType>` with `Result` and `Exception` properties)
-* `TheFuncCall.GetMakerInfo().Maker.DynamicInvoke(TheFuncCall.GetArgsArray())` : Exotic dynamic call scenario
+* `TheFuncCall.Call()` : Task like call (returns `FuncCallResult` with `Result` and `Exception` properties)
+* `TheFuncCall.GetMakerInfo().Maker.DynamicInvoke(TheFuncCall.GetArgsArray())` : Exotic (dynamic call)
 ```
 var MyCallResult = MyCall.Call(); // invoke with args suppled on Create
 if (MyCallResult.IsFaulted) { Console.Error.Write(MyCallResult.Exception); }
