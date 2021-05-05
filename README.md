@@ -22,6 +22,7 @@ Useful to clone simple objects that do not implement ICloneable interface
 var TheClone = ObjectCloner.CreateMemberwiseClone(TheSource);
 ```
 Copy data from one object to another via reflection. 
+
 Useful to copy data between objects with similar structure, but different types
 ```
 ObjectCloner.MemberwiseCopy(TheSource,TheTarget);
@@ -87,6 +88,7 @@ You may use `MyCall.GetMakerInfo()` to check original function properties before
 ## TickCount64
 
 `EnvironmentPlus.TickCount64` is a portable implementation of `Environment.TickCount64`.
+
 It fallbacks to unsigned `Environment.TickCount` if `Environment.TickCount64` is not available on target platform.
 
 ## AppSettingsValue
@@ -96,8 +98,8 @@ Lazy pattern to extract AppSettingsValue once, with type, default and validation
 // Declare MyParm to extract from app.config MyParamName as integer
 int MyParam = new AppSettingsValue<int>("MyParamName"); // with be extracted once
 
-// Declare MyParm2 to extract from app.config MyParam2Name as integer with default value of 100 and > 0 requirement
-int MyParam2 = new AppSettingsValue<int>("MyParam2Name", 100, (i) => i > 0);
+// Declare MyParm2 to extract from app.config MyParam2Name as int with default value of 100 and > 0 requirement
+int MyParam2 = new AppSettingsValue<int>("MyParam2Name", 100, (p) => p > 0);
 
 ... MyMethod(...)
 {
@@ -107,12 +109,12 @@ int MyParam2 = new AppSettingsValue<int>("MyParam2Name", 100, (i) => i > 0);
   if (MyParm2.Value > 1000)  // your code
 }
 ```
-Default value is used in case there is no value in configuration file or value if invalid (ether cannot be parsed or reject by validation function, if any)
+Default value is used in case there is no value in configuration file or value if invalid (ether cannot be parsed or was rejected by validation function, if any)
 
 ## MicroCache
 
 Micro cache is simple function call cache implementation speedup operations inside the process.
-* Simple API (just use single method `GetOrMake` : `var Result = MyCache.GetOrMake(MyFunc, MyArg1, MyArg2, ...)`)
+* Simple API (just use `GetOrMake` method : `var Result = MyCache.GetOrMake(MyFunc, MyArg1, MyArg2, ...)`)
 * Simple operation convention: assumes, that the function and it's explicit arguments are completely defines result
 * The function and values of call arguments define cache key (different functions with same parameters may share cache)
 * Any number of caches may co-exist in the same process (just instantiate as many `MicroCache` objects as you want
@@ -132,7 +134,7 @@ class MyClass
 
   //Assume these are function that do some heavy work
   private int CalcComplexStuffImplemenation(int a, int b) // ... some code
-  private long CalcComplexStuffImplemenation(int a, int b) // ... some code
+  private long CalcAnotherComplexStuffImplemenation(int a, int b) // ... some code
 
   // You may cache result of operation (different functions may be cached in single cache)
   public int CalcComplexStuff(a, b) { return MyCache.GetOrMake(CalcComplexStuffImplemenation, a, b); }
@@ -150,7 +152,7 @@ class MyClass
   // You may invalidate cache in case something changed
   public void UpdateSomeStuff(...)
   {
-    // Code that implicitely makes all cache invalid
+    // ... some code that implicitely makes cacheed data invalid
     MyCache.Invalidate();
   }
 
@@ -168,6 +170,7 @@ class MyClass
   public void SomeMemoryCoslyOperation(...)
   {
     MyCache.Purge();
+    // ...
   }
 }
 ```
